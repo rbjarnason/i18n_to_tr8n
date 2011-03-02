@@ -5,10 +5,8 @@ This plugin will convert your complete Rails project from i18n calls to tr8n.  N
 
 Usage
 =======
-Should work as a rake command but for now it only works in rails console using
+Should work as a rake command but for some reason rake doesnt load up the localizations so for now, at least in rails 3, it only works in rails console using
 I18nToTr8n::Base.new
-
-This will convert all your files.
 
 Installation
 =======
