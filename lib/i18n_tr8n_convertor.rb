@@ -1,5 +1,5 @@
-module GettextToI18n
-  class GettextI18nConvertor
+module I18nToTr8n
+  class I18nTr8nConvertor
     attr_accessor :text
     
     GETTEXT_VARIABLES = /\%\{(\w+)\}*/
@@ -14,18 +14,29 @@ module GettextToI18n
       #if result = /\_\([\"\']?([^\'\"]*)[\"\']?.*\)/.match(@text)
       
       #if result = /\_\(([\']?([^\']*)[\'])|([\"]?([^\"]*)[\"])?.*\)/.match(@text)
-      single_quotes = /\_\(\'([^']*)\'.*\)/.match(@text)
-      double_quotes = /\_\(\"([^"]*)\".*\)/.match(@text)
+#      single_quotes = /\(\'([^']*)\'\,/.match(@text)
+#      double_quotes = /\(\"([^"]*)\"\,/.match(@text)
+      single_quotes = /\'([^']*)\'/.match(@text)
+      double_quotes = /\"([^"]*)\"/.match(@text)
+      symbol = /\:([^"]*)\)/.match(@text)
+      
+#      puts @text
       
       if single_quotes
-        return single_quotes[1]
+#        puts "single"
+        return single_quotes[1].strip
       elsif double_quotes
-        return double_quotes[1]
+#        puts "double"
+        return double_quotes[1].strip
+      elsif symbol
+#        puts "symbol"
+        return symbol[1].strip
       else
-        return nil
+#        puts "nil"
+        return "nil"
       end
     end
-    
+
     def contents_i18n
       c = contents
       unless c.nil?
@@ -46,9 +57,10 @@ module GettextToI18n
     # return :a => 'sdf', :b => 'agh'
     def variable_part
       @variable_part_cached ||= begin
-          result = /\%[\s]+\{(.*)\}/.match(@text)
+#          result = /\%[\s]+\,(.*)\)/.match(@text)
+          result = /\,(.*)\)/.match(@text)
           if result
-              result[1]
+              result[1].strip
           end
       end
     end
@@ -86,7 +98,7 @@ module GettextToI18n
         return nil if vsplitted.nil?
         vsplitted.map! { |v| 
           r = v.match(/\s*:(\w+)\s*=>\s*(.*)/)
-          {:name => r[1], :value => GettextI18nConvertor.string_to_i18n(r[2], @namespace)}
+          {:name => r[1], :value => I18nTr8nConvertor.string_to_i18n(r[2], @namespace)}
         }
       end
     end
@@ -94,14 +106,25 @@ module GettextToI18n
     # After analyzing the variable part, the variables
     # it is now time to construct the actual i18n call
     def to_i18n
-      id = @namespace.consume_id!
-      @namespace.set_id(id, contents_i18n)
-      output = "t(:#{id}"
+      I18n.locale = "en"
+#      puts "to_translate: #{self.contents} #{I18n.locale.to_s}"
+      i18nified = I18n.t(self.contents)
+#      puts "translated: #{i18nified}"
+      if i18nified.instance_of?(String)
+        i18nified_text = i18nified
+      elsif i18nified.instance_of?(Hash)
+        i18nified_text = "HASH"
+        puts "HASH #{self.contents} #{i18nified}"
+      else
+        raise "Wrong type for I18n translate"
+      end
+      i18nified_text = i18nified_text.gsub("%{","{")
+      output = "tr(\"#{i18nified_text}\",\"\""
       if !self.variables.nil?
           vars = self.variables.collect { |h| {:name => h[:name], :value => h[:value] }}
           output += ", " + vars.collect {|h| ":#{h[:name]} => #{h[:value]}"}.join(", ")
       end
-      output += ", " + @namespace.to_i18n_scope
+#      output += ", " + @namespace.to_i18n_scope
       output += ")"
       return output
     end
@@ -109,7 +132,7 @@ module GettextToI18n
     # Takes the gettext calls out of a string and converts
     # them to i18n calls
     def self.string_to_i18n(text, namespace)
-      s = self.indexes_of(text, /_\(/)
+      s = self.indexes_of(text, /t\(/)
       e = self.indexes_of(text, /\)/)
       r = self.indexes_of(text, /\(/)
       
@@ -123,7 +146,7 @@ module GettextToI18n
        
         in_gettext_block = gettext_blocks.size % 2 == 1
         if !in_gettext_block
-          if ! /_\(/.match(token + text[i+1..i+1]).nil?
+          if ! /t\(/.match(token + text[i+1..i+1]).nil?
             gettext_blocks << i
             level = 0
           end
@@ -144,19 +167,19 @@ module GettextToI18n
         e = gettext_blocks[i * 2 + 1]
         to_convert = text[s..e]
        
-        converted_block = GettextI18nConvertor.new(to_convert, namespace).to_i18n
-        g = output.index(to_convert) - 1
-        
-        h = g + (e-s) + 2
+        if [" ","=",".","{","(",","].include?(text[s-1..s-1]) 
+          converted_block = I18nTr8nConvertor.new(to_convert, namespace).to_i18n
+        else
+          converted_block = to_convert
+        end
+          g = output.index(to_convert) - 1
+          
+          h = g + (e-s) + 2
         output = output[0..g] + converted_block + output[h..output.length]
       end
+      output = output.gsub("I18n.","")
       output
-    end
-    
-    
-   
-     
-    
+    end    
     
     private 
     

@@ -1,8 +1,8 @@
-module GettextToI18n
+module I18nToTr8n
   
   class Base
     attr_reader :translations
-    LOCALE_DIR = RAILS_ROOT + '/config/locales/'
+    LOCALE_DIR = Rails.root + '/config/locales/'
     STANDARD_LOCALE_FILE = LOCALE_DIR + 'template.yml'
     DEFAULT_LANGUAGE = 'some-LAN'
 
@@ -20,21 +20,21 @@ module GettextToI18n
       files.each do |file|
         parsed = ""
         namespace = [DEFAULT_LANGUAGE, 'txt', type] + Base.get_namespace(file, type)
-        puts "Converting: " + file + " into namespace: "
-        puts namespace.map {|x| "[\"#{x}\"]"}.join("")
+        #puts "Converting: " + file + " into namespace: "
+        namespace.map {|x| "[\"#{x}\"]"}.join("")
         
         n = Namespace.new(namespace)
         
         contents = Base.get_file_as_string(file)
-        parsed << GettextI18nConvertor.string_to_i18n(contents, n)
+        parsed << I18nTr8nConvertor.string_to_i18n(contents, n)
   
         #puts parsed
         # write the file
         
-        File.open(file, 'w') { |file| file.write(parsed)}
+        #File.open(file, 'w') { |file| file.write(parsed)}
         
-        
-        
+#        puts parsed
+#        sleep 1
         n.merge(@translations)
       end
     end

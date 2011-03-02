@@ -1,4 +1,4 @@
-GettextToI18n
+I18nToTr8n
 =============
 
 This plugin will convert your complete Rails project from Gettext calls to the new i18n api calls introduced in Rails 2.2.2. NB: This plugin is higly experimental, so before running, BACKUP YOUR CODE. It will touch your code and things always can go wrong!

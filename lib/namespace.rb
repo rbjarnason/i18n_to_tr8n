@@ -1,4 +1,4 @@
-module GettextToI18n
+module I18nToTr8n
   class Namespace
     attr_reader :ids
     

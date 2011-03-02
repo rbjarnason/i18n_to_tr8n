@@ -1,5 +1,5 @@
-# GettextToI18n
-module GettextToI18n
+# I18nToTr8n
+module I18nToTr8n
   class Files
     
     # all files that contain some gettext methods
