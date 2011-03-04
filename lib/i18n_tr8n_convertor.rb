@@ -103,26 +103,134 @@ module I18nToTr8n
       end
     end
     
-    # After analyzing the variable part, the variables
-    # it is now time to construct the actual i18n call
-    def to_i18n
-      I18n.locale = "en"
-#      puts "to_translate: #{self.contents} #{I18n.locale.to_s}"
-      i18nified = I18n.t(self.contents)
-#      puts "translated: #{i18nified}"
+    def create_tr8n_translation_key(label)
+      puts @namespace.to_i18n_scope
+      key = Tr8n::TranslationKey.find_or_create(label,"From #{@namespace.to_i18n_scope}")
+      puts key.inspect
+      key
+    end
+    
+    def create_tr8n_translation(key,label,to_locale,translator_email)
+      current_language = Tr8n::Language.for(to_locale)
+      current_translator = Tr8n::Translator.find_or_create(User.find_by_email(translator_email))
+      translations = key.translations_for(current_language)
+      source_url = "localhost"    
+      translation = Tr8n::Translation.new(:translation_key => key, :language => current_language, :translator => current_translator)
+    
+      translation.label = label
+
+      if translation.blank?
+        puts "Your translation was empty and was not accepted"
+        return
+      end
+      
+      unless translation.uniq?
+        puts "There already exists such translation for this phrase. Please vote on it instead or suggest an elternative translation."
+        return
+      end
+      
+      unless translation.clean?
+        puts "Your translation contains prohibited words and will not be accepted"
+        return 
+      end
+
+      translation.save_with_log!(current_translator)
+      translation.reset_votes!(current_translator)
+      puts "Saved translation #{translation}"      
+    end
+    
+    def create_tr8n_permutations(key,label_one,label_many,to_locale,translator_email,count_token)
+      current_language = Tr8n::Language.for(to_locale)
+      current_translator = Tr8n::Translator.find_or_create(User.find_by_email(translator_email))
+
+      new_translations = translation_key.generate_rule_permutations(current_language, current_translator, {"dependencies"=>{count_token=>{"number"=>"true"}}})
+      if new_translations.nil? or new_translations.empty?
+        puts "ERROR: new_translations empty"
+      end
+      new_translations.each do |translation|
+        if translation.rules.first[:rule] and translation.rules.first[:rule].definition["part1"]=="is"
+          translation.label = label_one
+          translation.save
+          puts "Created permution: #{translation}"
+        elsif translation.rules.first[:rule] and translation.rules.first[:rule].definition["part1"]=="is_not"
+          translation.label = label_many
+          translation.save
+          puts "Created permution: #{translation}"
+        end
+      end
+    end
+    
+    def get_first_in_hash(hash)
+      hash.each do |a,b|
+        return b
+      end
+    end
+    
+    def get_i18nified_text(i18nified)
       if i18nified.instance_of?(String)
         i18nified_text = i18nified
       elsif i18nified.instance_of?(Hash)
-        i18nified_text = "HASH"
         puts "HASH #{self.contents} #{i18nified}"
+        if i18nified[:one] and i18nified[:other]
+          i18nified_text = i18nified[:other]
+        else
+          i18nified_text = get_first_in_hash(i18nified)
+        end
       else
         raise "Wrong type for I18n translate"
       end
       i18nified_text = i18nified_text.gsub("%{","{")
+    end
+
+    # After analyzing the variable part, the variables
+    # it is now time to construct the actual i18n call
+    def to_i18n
+      I18n.locale = "en"
+      puts "to_translate: #{self.contents} #{I18n.locale.to_s}"
+      i18nified = I18n.t(self.contents)
+      puts "translated: #{i18nified}"
+      i18nified_text = label = get_i18nified_text(i18nified)      
+      translation_key = create_tr8n_translation_key(i18nified_text)
+      roberts_email = "vefur@skuggathing.is"
+
+      I18n.locale = "en"
+      i18nified = I18n.t(self.contents)
+      label = get_i18nified_text(i18nified)      
+      puts "translated: #{label}"
+      create_tr8n_translation(translation_key,label,I18n.locale.to_s,roberts_email)
+      create_tr8n_permutations(translation_key,i18nified[:one],i18nified[:other],I18n.locale.to_s,roberts_email,"count") if i18nified == Hash and i18nified[:one] and i18nified[:other]
+
+      I18n.locale = "is"
+      i18nified = I18n.t(self.contents)
+      label = get_i18nified_text(i18nified)
+      puts "translated: #{label}"
+      unless label.include?("translation missing")    
+        create_tr8n_translation(translation_key,label,I18n.locale.to_s,roberts_email)
+        create_tr8n_permutations(translation_key,i18nified[:one],i18nified[:other],I18n.locale.to_s,roberts_email,"count") if i18nified == Hash and i18nified[:one] and i18nified[:other]
+      end
+
+      I18n.locale = "fr"
+      i18nified = I18n.t(self.contents)
+      label = get_i18nified_text(i18nified)      
+      puts "translated: #{label}"
+      unless label.include?("translation missing")    
+        create_tr8n_translation(translation_key,label,I18n.locale.to_s,roberts_email)
+        create_tr8n_permutations(translation_key,i18nified[:one],i18nified[:other],I18n.locale.to_s,roberts_email,"count") if i18nified == Hash and i18nified[:one] and i18nified[:other]
+      end
+
+      I18n.locale = "de"
+      i18nified = I18n.t(self.contents)
+      label = get_i18nified_text(i18nified)      
+      puts "translated: #{i18nified}"
+      unless label.include?("translation missing")    
+        create_tr8n_translation(translation_key,label,I18n.locale.to_s,roberts_email)
+        create_tr8n_permutations(translation_key,i18nified[:one],i18nified[:other],I18n.locale.to_s,roberts_email,"count") if i18nified == Hash and i18nified[:one] and i18nified[:other]
+      end
+
       output = "tr(\"#{i18nified_text}\",\"\""
       if !self.variables.nil?
-          vars = self.variables.collect { |h| {:name => h[:name], :value => h[:value] }}
-          output += ", " + vars.collect {|h| ":#{h[:name]} => #{h[:value]}"}.join(", ")
+        vars = self.variables.collect { |h| {:name => h[:name], :value => h[:value] }}
+        output += ", " + vars.collect {|h| ":#{h[:name]} => #{h[:value]}"}.join(", ")
       end
 #      output += ", " + @namespace.to_i18n_scope
       output += ")"
