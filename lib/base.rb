@@ -28,7 +28,7 @@ module I18nToTr8n
         contents = Base.get_file_as_string(file)
         parsed << I18nTr8nConvertor.string_to_i18n(contents, n)
   
-        #puts parsed
+        puts parsed
         # write the file
         
         #File.open(file, 'w') { |file| file.write(parsed)}

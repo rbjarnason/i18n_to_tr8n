@@ -142,8 +142,10 @@ module I18nToTr8n
     def create_tr8n_permutations(key,label_one,label_many,to_locale,translator_email,count_token)
       current_language = Tr8n::Language.for(to_locale)
       current_translator = Tr8n::Translator.find_or_create(User.find_by_email(translator_email))
-
-      new_translations = translation_key.generate_rule_permutations(current_language, current_translator, {"dependencies"=>{count_token=>{"number"=>"true"}}})
+      
+      puts "Before perm: #{current_language} #{current_translator} #{{"dependencies"=>{count_token=>{"number"=>"true"}}}}"
+      new_translations = key.generate_rule_permutations(current_language, current_translator, {count_token=>{"number"=>"true"}})
+      puts "new_translations #{new_translations}"
       if new_translations.nil? or new_translations.empty?
         puts "ERROR: new_translations empty"
       end
@@ -151,11 +153,11 @@ module I18nToTr8n
         if translation.rules.first[:rule] and translation.rules.first[:rule].definition["part1"]=="is"
           translation.label = label_one
           translation.save
-          puts "Created permution: #{translation}"
+          puts "Created permution: #{translation.inspect}"
         elsif translation.rules.first[:rule] and translation.rules.first[:rule].definition["part1"]=="is_not"
           translation.label = label_many
           translation.save
-          puts "Created permution: #{translation}"
+          puts "Created permution: #{translation.inspect}"
         end
       end
     end
@@ -188,6 +190,7 @@ module I18nToTr8n
       I18n.locale = "en"
       puts "to_translate: #{self.contents} #{I18n.locale.to_s}"
       i18nified = I18n.t(self.contents)
+      return "X" unless i18nified.instance_of?(Hash)
       puts "translated: #{i18nified}"
       i18nified_text = label = get_i18nified_text(i18nified)      
       translation_key = create_tr8n_translation_key(i18nified_text)
@@ -198,7 +201,7 @@ module I18nToTr8n
       label = get_i18nified_text(i18nified)      
       puts "translated: #{label}"
       create_tr8n_translation(translation_key,label,I18n.locale.to_s,roberts_email)
-      create_tr8n_permutations(translation_key,i18nified[:one],i18nified[:other],I18n.locale.to_s,roberts_email,"count") if i18nified == Hash and i18nified[:one] and i18nified[:other]
+      create_tr8n_permutations(translation_key,i18nified[:one].gsub("%{","{"),i18nified[:other].gsub("%{","{"),I18n.locale.to_s,roberts_email,"count") if i18nified.instance_of?(Hash) and i18nified[:one] and i18nified[:other]
 
       I18n.locale = "is"
       i18nified = I18n.t(self.contents)
@@ -206,7 +209,7 @@ module I18nToTr8n
       puts "translated: #{label}"
       unless label.include?("translation missing")    
         create_tr8n_translation(translation_key,label,I18n.locale.to_s,roberts_email)
-        create_tr8n_permutations(translation_key,i18nified[:one],i18nified[:other],I18n.locale.to_s,roberts_email,"count") if i18nified == Hash and i18nified[:one] and i18nified[:other]
+        create_tr8n_permutations(translation_key,i18nified[:one].gsub("%{","{"),i18nified[:other].gsub("%{","{"),I18n.locale.to_s,roberts_email,"count") if i18nified.instance_of?(Hash) and i18nified[:one] and i18nified[:other]
       end
 
       I18n.locale = "fr"
@@ -215,7 +218,7 @@ module I18nToTr8n
       puts "translated: #{label}"
       unless label.include?("translation missing")    
         create_tr8n_translation(translation_key,label,I18n.locale.to_s,roberts_email)
-        create_tr8n_permutations(translation_key,i18nified[:one],i18nified[:other],I18n.locale.to_s,roberts_email,"count") if i18nified == Hash and i18nified[:one] and i18nified[:other]
+        create_tr8n_permutations(translation_key,i18nified[:one].gsub("%{","{"),i18nified[:other].gsub("%{","{"),I18n.locale.to_s,roberts_email,"count") if i18nified.instance_of?(Hash) and i18nified[:one] and i18nified[:other]
       end
 
       I18n.locale = "de"
@@ -224,7 +227,7 @@ module I18nToTr8n
       puts "translated: #{i18nified}"
       unless label.include?("translation missing")    
         create_tr8n_translation(translation_key,label,I18n.locale.to_s,roberts_email)
-        create_tr8n_permutations(translation_key,i18nified[:one],i18nified[:other],I18n.locale.to_s,roberts_email,"count") if i18nified == Hash and i18nified[:one] and i18nified[:other]
+        create_tr8n_permutations(translation_key,i18nified[:one].gsub("%{","{"),i18nified[:other].gsub("%{","{"),I18n.locale.to_s,roberts_email,"count") if i18nified.instance_of?(Hash) and i18nified[:one] and i18nified[:other]
       end
 
       output = "tr(\"#{i18nified_text}\",\"\""
