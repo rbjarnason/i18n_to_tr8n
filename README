@@ -1,46 +1,17 @@
 I18nToTr8n
 =============
 
-This plugin will convert your complete Rails project from Gettext calls to the new i18n api calls introduced in Rails 2.2.2. NB: This plugin is higly experimental, so before running, BACKUP YOUR CODE. It will touch your code and things always can go wrong!
-
-
-Example
-=======
-	<%=_("Some string that will be translated, into %{lan}" % {:lan => 'english'}) %>
-
-will be converted into:
-
-	<%=t(:message_0, :lan => 'english', :scope => [:controller, :controller_name]) %>
-
-it will then place a entry:
-	
-	"Some string that will be translated, into {{lan}}"
-	
-in the standard.yml locale file it generates.
-
-
-About namespaces
-========
-By default the plugin walks all files in the app directory. It places the message id's into namespaces. The namespace are divided like this: 
-
-	Controllers: translation[:txt][:controller][:controller_name]
-	Views: translation[:txt][:view][:view_colleciton_name]
-	-> etc.
-	
-	
+This plugin will convert your complete Rails project from i18n calls to tr8n.  NB: This plugin is higly experimental, so before running, BACKUP YOUR CODE. It will touch your code and things always can go wrong!
 
 Usage
 =======
-To convert all your views, controllers and models to the new format.
-
-	rake gettext_to_i18n:transform
-
+Should work as a rake command but for some reason rake doesnt load up the localizations so for now, at least in rails 3, it only works in rails console using
+I18nToTr8n::Base.new
 
 Installation
 =======
-./script/plugin install git://github.com/japetheape/gettext_to_i18n.git
-
+rails plugin install git://github.com/rbjarnason/i18n_to_tr8n.git
 
 
 -------------
-Copyright (c) 2008 Jaap van der Meer, released under the MIT license
+Copyright (c) 2008,2011 Jaap van der Meer & Robert Bjarnason, released under the MIT license
