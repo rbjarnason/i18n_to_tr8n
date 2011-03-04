@@ -30,12 +30,10 @@ module I18nToTr8n
   
         puts parsed
         # write the file
-        
-        #File.open(file, 'w') { |file| file.write(parsed)}
-        
+        File.open(file, 'w') { |file| file.write(parsed)}        
 #        puts parsed
 #        sleep 1
-        n.merge(@translations)
+        #n.merge(@translations)
       end
     end
     

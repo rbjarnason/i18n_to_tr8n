@@ -42,6 +42,9 @@ module I18nToTr8n
       @cached_i18n_scope ||= ":scope => [%s]" % i18n_namespace.collect {|x| ":#{x}"}.join(", ")
     end
     
+    def to_tr8n_scope
+      @cached_tr8n_scope ||= i18n_namespace.collect {|x| "#{x}"}.join("_")
+    end
     
     def merge(base)
       loc = ""

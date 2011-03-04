@@ -7,10 +7,9 @@ require File.dirname(__FILE__) + '/../init'
 
 namespace :i18n_to_tr8n do
   
-  desc 'Transforms all of your files into the new I18n api format'
+  desc 'Transforms all of your files into the tr8n format'
   task :transform do
-    a = I18nToTr8n::Base.new
-#    a.dump_yaml!
+    I18nToTr8n::Base.new
   end
   
   

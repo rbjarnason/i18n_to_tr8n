@@ -105,7 +105,7 @@ module I18nToTr8n
     
     def create_tr8n_translation_key(label)
       puts @namespace.to_i18n_scope
-      key = Tr8n::TranslationKey.find_or_create(label,"From #{@namespace.to_i18n_scope}")
+      key = Tr8n::TranslationKey.find_or_create(label,@namespace.to_tr8n_scope)
       puts key.inspect
       key
     end
@@ -181,7 +181,11 @@ module I18nToTr8n
       else
         raise "Wrong type for I18n translate"
       end
-      i18nified_text = i18nified_text.gsub("%{","{")
+      i18nified_text = gsub_all(i18nified_text)
+    end
+
+    def gsub_all(text)
+      text.gsub("%{","{").gsub("\#{","{")
     end
 
     # After analyzing the variable part, the variables
@@ -190,7 +194,6 @@ module I18nToTr8n
       I18n.locale = "en"
       puts "to_translate: #{self.contents} #{I18n.locale.to_s}"
       i18nified = I18n.t(self.contents)
-      return "X" unless i18nified.instance_of?(Hash)
       puts "translated: #{i18nified}"
       i18nified_text = label = get_i18nified_text(i18nified)      
       translation_key = create_tr8n_translation_key(i18nified_text)
@@ -201,7 +204,7 @@ module I18nToTr8n
       label = get_i18nified_text(i18nified)      
       puts "translated: #{label}"
       create_tr8n_translation(translation_key,label,I18n.locale.to_s,roberts_email)
-      create_tr8n_permutations(translation_key,i18nified[:one].gsub("%{","{"),i18nified[:other].gsub("%{","{"),I18n.locale.to_s,roberts_email,"count") if i18nified.instance_of?(Hash) and i18nified[:one] and i18nified[:other]
+      create_tr8n_permutations(translation_key,gsub_all(i18nified[:one]),gsub_all(i18nified[:other]),I18n.locale.to_s,roberts_email,"count") if i18nified.instance_of?(Hash) and i18nified[:one] and i18nified[:other]
 
       I18n.locale = "is"
       i18nified = I18n.t(self.contents)
@@ -209,7 +212,7 @@ module I18nToTr8n
       puts "translated: #{label}"
       unless label.include?("translation missing")    
         create_tr8n_translation(translation_key,label,I18n.locale.to_s,roberts_email)
-        create_tr8n_permutations(translation_key,i18nified[:one].gsub("%{","{"),i18nified[:other].gsub("%{","{"),I18n.locale.to_s,roberts_email,"count") if i18nified.instance_of?(Hash) and i18nified[:one] and i18nified[:other]
+        create_tr8n_permutations(translation_key,gsub_all(i18nified[:one]),gsub_all(i18nified[:other]),I18n.locale.to_s,roberts_email,"count") if i18nified.instance_of?(Hash) and i18nified[:one] and i18nified[:other]
       end
 
       I18n.locale = "fr"
@@ -218,7 +221,7 @@ module I18nToTr8n
       puts "translated: #{label}"
       unless label.include?("translation missing")    
         create_tr8n_translation(translation_key,label,I18n.locale.to_s,roberts_email)
-        create_tr8n_permutations(translation_key,i18nified[:one].gsub("%{","{"),i18nified[:other].gsub("%{","{"),I18n.locale.to_s,roberts_email,"count") if i18nified.instance_of?(Hash) and i18nified[:one] and i18nified[:other]
+        create_tr8n_permutations(translation_key,gsub_all(i18nified[:one]),gsub_all(i18nified[:other]),I18n.locale.to_s,roberts_email,"count") if i18nified.instance_of?(Hash) and i18nified[:one] and i18nified[:other]
       end
 
       I18n.locale = "de"
@@ -227,15 +230,14 @@ module I18nToTr8n
       puts "translated: #{i18nified}"
       unless label.include?("translation missing")    
         create_tr8n_translation(translation_key,label,I18n.locale.to_s,roberts_email)
-        create_tr8n_permutations(translation_key,i18nified[:one].gsub("%{","{"),i18nified[:other].gsub("%{","{"),I18n.locale.to_s,roberts_email,"count") if i18nified.instance_of?(Hash) and i18nified[:one] and i18nified[:other]
+        create_tr8n_permutations(translation_key,gsub_all(i18nified[:one]),gsub_all(i18nified[:other]),I18n.locale.to_s,roberts_email,"count") if i18nified.instance_of?(Hash) and i18nified[:one] and i18nified[:other]
       end
 
-      output = "tr(\"#{i18nified_text}\",\"\""
+      output = "tr(\"#{gsub_all(i18nified_text)}\", \"#{@namespace.to_tr8n_scope}\""
       if !self.variables.nil?
         vars = self.variables.collect { |h| {:name => h[:name], :value => h[:value] }}
         output += ", " + vars.collect {|h| ":#{h[:name]} => #{h[:value]}"}.join(", ")
       end
-#      output += ", " + @namespace.to_i18n_scope
       output += ")"
       return output
     end
