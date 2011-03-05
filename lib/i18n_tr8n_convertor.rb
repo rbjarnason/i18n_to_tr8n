@@ -185,7 +185,7 @@ module I18nToTr8n
     end
 
     def gsub_all(text)
-      text.gsub("%{","{").gsub("\#{","{")
+      text.gsub("%{","{").gsub("\#{","{").squeeze(" ").strip
     end
 
     # After analyzing the variable part, the variables
@@ -198,6 +198,7 @@ module I18nToTr8n
       i18nified_text = label = get_i18nified_text(i18nified)      
       translation_key = create_tr8n_translation_key(i18nified_text)
       roberts_email = "vefur@skuggathing.is"
+      francoise_email = "firana18@hotmail.com"
 
       I18n.locale = "en"
       i18nified = I18n.t(self.contents)
@@ -220,8 +221,8 @@ module I18nToTr8n
       label = get_i18nified_text(i18nified)      
       puts "translated: #{label}"
       unless label.include?("translation missing")    
-        create_tr8n_translation(translation_key,label,I18n.locale.to_s,roberts_email)
-        create_tr8n_permutations(translation_key,gsub_all(i18nified[:one]),gsub_all(i18nified[:other]),I18n.locale.to_s,roberts_email,"count") if i18nified.instance_of?(Hash) and i18nified[:one] and i18nified[:other]
+        create_tr8n_translation(translation_key,label,I18n.locale.to_s,francoise_email)
+        create_tr8n_permutations(translation_key,gsub_all(i18nified[:one]),gsub_all(i18nified[:other]),I18n.locale.to_s,francoise_email,"count") if i18nified.instance_of?(Hash) and i18nified[:one] and i18nified[:other]
       end
 
       I18n.locale = "de"

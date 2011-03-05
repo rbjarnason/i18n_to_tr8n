@@ -19,7 +19,7 @@ module I18nToTr8n
     def transform_files!(files, type)  
       files.each do |file|
         parsed = ""
-        namespace = [DEFAULT_LANGUAGE, 'txt', type] + Base.get_namespace(file, type)
+        namespace = [DEFAULT_LANGUAGE, type] + Base.get_namespace(file, type)
         #puts "Converting: " + file + " into namespace: "
         namespace.map {|x| "[\"#{x}\"]"}.join("")
         
@@ -59,14 +59,18 @@ module I18nToTr8n
     # example: 
     # Base.get_name('/controllers/apidoc_controller.rb', 'controller') => 'apidoc'
     def self.get_namespace(file, type)
+     puts "get namespace for: #{file} #{type}"
      case type
-
        when :controller
          if result = /application\.rb/.match(file)
            return ['application']
          else
            result = /([a-zA-Z]+)_controller.rb/.match(file)
-           return [result[1]]
+           if result
+             return [result[1]]
+           else
+             return "unknown_controller"
+           end
          end
          return ""
        when :helper
