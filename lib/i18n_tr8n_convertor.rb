@@ -192,64 +192,42 @@ module I18nToTr8n
     # it is now time to construct the actual i18n call
     def to_i18n
       output = ""
-      ActiveRecord::Base.transaction do
-        I18n.locale = "en"
-        puts "to_translate: #{self.contents} #{I18n.locale.to_s}"
-        i18nified = I18n.t(self.contents)
-        puts "translated: #{i18nified}"
-        i18nified_text = label = get_i18nified_text(i18nified)      
-        translation_key = create_tr8n_translation_key(i18nified_text)
-        roberts_email = "vefur@skuggathing.is"
-        francoise_email = "firana18@hotmail.com"
-  
-        I18n.locale = "en"
-        i18nified = I18n.t(self.contents)
-        label = get_i18nified_text(i18nified)      
-        puts "translated: #{label}"
-        create_tr8n_translation(translation_key,label,I18n.locale.to_s,roberts_email)
-        create_tr8n_permutations(translation_key,gsub_all(i18nified[:one]),gsub_all(i18nified[:other]),I18n.locale.to_s,roberts_email,"count") if i18nified.instance_of?(Hash) and i18nified[:one] and i18nified[:other]
-  
-        I18n.locale = "is"
+      I18n.locale = "en"
+      puts "to_translate: #{self.contents} #{I18n.locale.to_s}"
+      i18nified = I18n.t(self.contents)
+      puts "translated: #{i18nified}"
+      i18nified_text = label = get_i18nified_text(i18nified)      
+      translation_key = create_tr8n_translation_key(i18nified_text)
+      admin_email = "vefur@skuggathing.is"
+      francoise_email = "firana18@hotmail.com"
+
+      [["en",admin_email],["de",admin_email],["is",admin_email],["fr",francoise_email]].each do |locale,email|
+        I18n.locale = locale
         i18nified = I18n.t(self.contents)
         label = get_i18nified_text(i18nified)
         puts "translated: #{label}"
-        unless label.include?("translation missing")    
-          create_tr8n_translation(translation_key,label,I18n.locale.to_s,roberts_email)
-          create_tr8n_permutations(translation_key,gsub_all(i18nified[:one]),gsub_all(i18nified[:other]),I18n.locale.to_s,roberts_email,"count") if i18nified.instance_of?(Hash) and i18nified[:one] and i18nified[:other]
+        if label.include?("translation missing")
+          puts "Skipping missing translation for #{locale}"
+        else
+          create_tr8n_translation(translation_key,label,I18n.locale.to_s,email)
+          if i18nified.instance_of?(Hash) and i18nified[:one] and i18nified[:other]
+            create_tr8n_permutations(translation_key,gsub_all(i18nified[:one]),gsub_all(i18nified[:other]),I18n.locale.to_s,email,"count")
+          end
         end
-  
-        I18n.locale = "fr"
-        i18nified = I18n.t(self.contents)
-        label = get_i18nified_text(i18nified)      
-        puts "translated: #{label}"
-        unless label.include?("translation missing")    
-          create_tr8n_translation(translation_key,label,I18n.locale.to_s,francoise_email)
-          create_tr8n_permutations(translation_key,gsub_all(i18nified[:one]),gsub_all(i18nified[:other]),I18n.locale.to_s,francoise_email,"count") if i18nified.instance_of?(Hash) and i18nified[:one] and i18nified[:other]
-        end
-  
-        I18n.locale = "de"
-        i18nified = I18n.t(self.contents)
-        label = get_i18nified_text(i18nified)      
-        puts "translated: #{i18nified}"
-        unless label.include?("translation missing")    
-          create_tr8n_translation(translation_key,label,I18n.locale.to_s,roberts_email)
-          create_tr8n_permutations(translation_key,gsub_all(i18nified[:one]),gsub_all(i18nified[:other]),I18n.locale.to_s,roberts_email,"count") if i18nified.instance_of?(Hash) and i18nified[:one] and i18nified[:other]
-        end
-  
-        output += "tr(\"#{gsub_all(i18nified_text)}\", \"#{@namespace.to_tr8n_scope}\""
-        if !self.variables.nil?
-          vars = self.variables.collect { |h| {:name => h[:name], :value => h[:value] }}
-          output += ", " + vars.collect {|h| ":#{h[:name]} => #{h[:value]}"}.join(", ")
-        end
-        output += ")"
       end
-      return output
+
+      output += "tr(\"#{gsub_all(i18nified_text)}\", \"#{@namespace.to_tr8n_scope}\""
+      if !self.variables.nil?
+        vars = self.variables.collect { |h| {:name => h[:name], :value => h[:value] }}
+        output += ", " + vars.collect {|h| ":#{h[:name]} => #{h[:value]}"}.join(", ")
+      end
+      output += ")"
     end
     
     # Takes the gettext calls out of a string and converts
     # them to i18n calls
     def self.string_to_i18n(text, namespace)
-      s = self.indexes_of(text, /t\(/)
+      s = self.indexes_of(text, /t\(/) 
       e = self.indexes_of(text, /\)/)
       r = self.indexes_of(text, /\(/)
       

@@ -18,22 +18,24 @@ module I18nToTr8n
     # Walks all files and converts them all to the new format
     def transform_files!(files, type)  
       files.each do |file|
-        parsed = ""
-        namespace = [DEFAULT_LANGUAGE, type] + Base.get_namespace(file, type)
-        #puts "Converting: " + file + " into namespace: "
-        namespace.map {|x| "[\"#{x}\"]"}.join("")
-        
-        n = Namespace.new(namespace)
-        
-        contents = Base.get_file_as_string(file)
-        parsed << I18nTr8nConvertor.string_to_i18n(contents, n)
-  
-        puts parsed
-        # write the file
-        File.open(file, 'w') { |file| file.write(parsed)}        
-#        puts parsed
-#        sleep 1
-        #n.merge(@translations)
+        ActiveRecord::Base.transaction do
+          parsed = ""
+          namespace = [DEFAULT_LANGUAGE, type] + Base.get_namespace(file, type)
+          #puts "Converting: " + file + " into namespace: "
+          namespace.map {|x| "[\"#{x}\"]"}.join("")
+          
+          n = Namespace.new(namespace)
+          
+          contents = Base.get_file_as_string(file)
+          parsed << I18nTr8nConvertor.string_to_i18n(contents, n)
+    
+          puts parsed
+          # write the file
+          File.open(file, 'w') { |file| file.write(parsed)}        
+  #        puts parsed
+  #        sleep 1
+          #n.merge(@translations)
+        end
       end
     end
     
