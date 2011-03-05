@@ -43,7 +43,7 @@ module I18nToTr8n
     end
     
     def to_tr8n_scope
-      @cached_tr8n_scope ||= i18n_namespace.collect {|x| "#{x}"}.join("_")
+      @cached_tr8n_scope ||= i18n_namespace.collect {|x| "#{x}"}.join("/")
     end
     
     def merge(base)
